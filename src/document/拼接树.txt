@@ -1,0 +1,49 @@
+public List<ModuleVo> getPowersByRoleIds(UserVo user, List<Integer> roleIds, boolean parse) throws CPServiceException{
+		List<ModuleVo> mVos=new ArrayList<ModuleVo>();
+		List<Integer> flagIds=new ArrayList<Integer>();
+		Map<Integer, ModuleVo> map = new HashMap<Integer, ModuleVo>();
+		for(Integer roleId:roleIds){
+			List<ModuleVo> vos=getPowersByRoleId(null, roleId, false);
+			if(vos==null){
+				continue;
+			}
+			for(ModuleVo vo:vos){
+				if(flagIds.contains(vo.getModuleId())){
+					continue;
+				}
+				mVos.add(vo);
+				map.put(vo.getModuleId(), vo);
+				flagIds.add(vo.getModuleId());
+			}
+		}
+		if(parse){
+			ModuleVo pVo = null;
+			for(int i=0; i<mVos.size(); i++){
+				ModuleVo vo = mVos.get(i);
+				int pid = vo.getModuleParentId();
+				if(pid <= 0 || map.get(pid) == null){
+					continue;
+				}
+				pVo = map.get(pid);
+				List<ModuleVo> sVos = pVo.getSubModules();
+				if(sVos == null){
+					sVos = new ArrayList<ModuleVo>();
+					sVos.add(vo);
+				}else{
+					if(!sVos.contains(vo)){
+						sVos.add(vo);
+					}
+				}
+				
+				pVo.setSubModules(sVos);
+				mVos.remove(i);
+				i--;
+			}
+		}
+		map.clear();
+		map = null;
+		
+		listSort(mVos);
+
+		return mVos;
+	}
